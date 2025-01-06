@@ -1,0 +1,4 @@
+weather/Include/
+weather/Lib/
+weather/Scripts/
+weather/**/__pycache__/
