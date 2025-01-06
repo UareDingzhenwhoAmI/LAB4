@@ -1,0 +1,151 @@
+<!-- templates/index.html -->
+<meta charset="UTF-8">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Weather</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #loadingMessage {
+            text-align: center;
+            font-size: 16px;
+            color: #4CAF50;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>City Weather</h1>
+
+    <button onclick="updateWeather()">Update Weather</button>
+    <p id="loadingMessage">Loading weather data...</p>
+
+    <table id="weatherTable">
+        <thead>
+            <tr>
+                <th>City</th>
+                <th>Temperature (°C)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Weather data will be populated here -->
+        </tbody>
+    </table>
+
+    <script>
+        let weatherData = [];  // 用来存储天气数据
+
+        async function updateWeather() {
+            document.getElementById("loadingMessage").style.display = "block"; // 显示加载信息
+
+            try {
+                const response = await fetch('/update');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch weather data');
+                }
+
+                weatherData = await response.json();  // 更新天气数据
+                displayWeatherData();  // 显示天气数据
+            } catch (error) {
+                console.error("Error updating weather data:", error);
+                alert("Failed to update weather data. Please try again later.");
+            } finally {
+                document.getElementById("loadingMessage").style.display = "none"; // 隐藏加载信息
+            }
+        }
+
+        async function removeCity(cityName) {
+            try {
+                const response = await fetch(`/remove_city/${cityName}`, {
+                    method: 'DELETE',
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to remove city');
+                }
+
+                // 删除城市后，更新天气数据
+                weatherData = weatherData.filter(city => city.city !== cityName);
+                displayWeatherData(); // 重新渲染表格
+            } catch (error) {
+                console.error("Error removing city:", error);
+                alert("Failed to remove city. Please try again later.");
+            }
+        }
+
+        // 渲染天气数据
+        function displayWeatherData() {
+            const tableBody = document.getElementById('weatherTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = ""; // 清空现有的表格行
+
+            weatherData.forEach(city => {
+                const row = document.createElement('tr');
+
+                const cityCell = document.createElement('td');
+                cityCell.textContent = city.city;
+                row.appendChild(cityCell);
+
+                const temperatureCell = document.createElement('td');
+                temperatureCell.textContent = `${city.temperature}°C`;
+                row.appendChild(temperatureCell);
+
+                const actionCell = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = "Remove";
+                deleteButton.classList.add("delete-button");
+                deleteButton.onclick = () => removeCity(city.city);  // 删除按钮事件
+                actionCell.appendChild(deleteButton);
+                row.appendChild(actionCell);
+
+                tableBody.appendChild(row);
+            });
+        }
+    </script>
+
+</body>
+</html>
+
+
